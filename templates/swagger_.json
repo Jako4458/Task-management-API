@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "description": "An API to create and manage tasks and users."
   },
-  "host": "localhost:5000",
+  "host": "{{ HOST }}:{{ PORT }}",
   "basePath": "/",
   "schemes": ["http"],
   "securityDefinitions": {

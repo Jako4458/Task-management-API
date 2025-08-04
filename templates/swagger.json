@@ -1,0 +1,188 @@
+openapi: 3.0.3
+info:
+  title: Task Management API
+  version: 1.0.0
+  description: An API to create and manage tasks and users.
+servers:
+  - url: http://{{ HOST }}:{{ PORT }}
+paths:
+  /register:
+    post:
+      summary: Register a new user
+      description: Creates a new user with a username and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        '201':
+          description: User registered
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /login:
+    post:
+      summary: Login a user
+      description: Returns a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: JWT token returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /tasks:
+    get:
+      summary: List user's tasks
+      description: Returns a list of tasks for the authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized
+
+    post:
+      summary: Create a new task
+      description: Creates a new task for the authenticated user.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '201':
+          description: Task created
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+  /tasks/{task_id}:
+    put:
+      summary: Update a task
+      description: Updates a task by ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '200':
+          description: Task updated
+        '401':
+          description: Unauthorized
+        '404':
+          description: Task not found
+
+    delete:
+      summary: Delete a task
+      description: Deletes a task by ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Task deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Task not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        is_completed:
+          type: boolean
+    TaskInput:
+      type: object
+      properties:
+        title:
+          type: string
+          default: "task-title"
+        description:
+          type: string
+          default: "task-description"
+        due_date:
+          type: string
+          format: date-time
+        is_completed:
+          type: boolean
+          default: false
+      required:
+        - title
+
