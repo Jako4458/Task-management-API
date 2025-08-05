@@ -34,6 +34,8 @@ def test_create_user_empty_password(flask_app):
 @pytest.fixture
 def test_login_correct(flask_app):
     response = flask_app.post(f"/register", json={"username": "test-user", "password": "test-password"})
+    assert response.status_code == 201
+
     response = flask_app.post(f"/login", json={"username": "test-user", "password": "test-password"})
     assert response.status_code == 200
     assert response.json is not None
@@ -42,11 +44,15 @@ def test_login_correct(flask_app):
 
 def test_login_user_not_found(flask_app):
     response = flask_app.post(f"/register", json={"username": "test-user", "password": "test-password"})
+    assert response.status_code == 201
+
     response = flask_app.post(f"/login", json={"username": "not-real-user", "password": "test-password"})
     assert response.status_code == 401
 
 def test_login_incorrect_password(flask_app):
     response = flask_app.post(f"/register", json={"username": "test-user", "password": "test-password"})
+    assert response.status_code == 201
+
     response = flask_app.post(f"/login", json={"username": "test-user", "password": "wrong-password"})
     assert response.status_code == 401
 
@@ -62,3 +68,22 @@ def test_get_tasks_unathorized(flask_app, test_login_correct):
     headers = {"Authorization": f"Bearer {invalid_auth_token}"}
     response = flask_app.get(f"/tasks", headers=headers)
     assert response.status_code == 401
+
+###########################################
+
+def test_insert_and_get_task(flask_app, test_login_correct):
+    headers = {"Authorization": f"Bearer {test_login_correct}"}
+    response = flask_app.post(f"/tasks", json={"title": "Task-title"}, headers=headers)
+    assert response.status_code == 200
+
+    response = flask_app.get(f"/tasks", headers=headers)
+    assert response.status_code == 200
+    assert response.json is not None
+    assert response.json[0]["title"] == "Task-title"
+
+def test_insert_task_no_title(flask_app, test_login_correct):
+    headers = {"Authorization": f"Bearer {test_login_correct}"}
+    response = flask_app.post(f"/tasks", json={"description": "Task-description"}, headers=headers)
+    assert response.status_code == 400
+
+###########################################
