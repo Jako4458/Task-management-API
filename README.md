@@ -60,5 +60,5 @@ Only a representative subset of possible scenarios is tested to demonstrate stru
 
 This project can optionally be viewed live via a temporary Cloudflare Tunnel or similar deployment. If enabled, the API will be accessible at:
 
-**🔗 https://taskManagementApi.jbhyldgaard.dk**
+**🔗 https://taskmanagementapi.jbhyldgaard.dk/docs/**
 
