@@ -18,7 +18,13 @@ This project uses Swagger UI for full API documentation, available at `/docs`.
 - `DELETE /tasks/{task_id}` – Delete a task
 
 ---
+### Setup
 
+To run the server using Docker you simply have to:
+- run 'docker-compose build'
+- run 'docker-compose up -d'
+**Note** If the flask application starts before the Postgres is ready for connection flask will fail and a simple rerun of 'docker-compose up -d' should fix it 
+  
 ### 🧪 Testing Overview
 
 Automated testing is included using **pytest** to verify the API functionality and database behavior.
