@@ -32,8 +32,9 @@ Automated testing is included using **pytest** to verify the API functionality a
 
 #### Setup
 To setup a testing environment and run the test you must:
-- Run a Postgres testing database. Can be done from docker with 'docker-compose --profile testing up -d testing_postgres' and run 
-- Run either 'pytest' for all tests or 'pytest <filename>' for specific tests.
+- update variables in '.env.testing'
+- run a Postgres testing database. Can be done from docker with 'docker-compose --profile testing up -d testing_postgres' and run 
+- run either 'pytest' for all tests or 'pytest <filename>' for specific tests.
 
 #### ✅ What’s Tested:
 - **User registration**: Valid and invalid cases (missing fields, empty strings)
