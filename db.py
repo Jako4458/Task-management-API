@@ -9,7 +9,7 @@ metadata = sa.MetaData()
 user_table = sa.Table("User",
                      metadata,
                      sa.Column("id", sa.Integer, primary_key=True),
-                      sa.Column("username", sa.String), #! TODO MAKE UNIQUE  
+                      sa.Column("username", sa.String, unique=True),
                      sa.Column("password_hash", sa.String),
                      )
 

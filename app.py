@@ -74,7 +74,7 @@ def register():
     return make_response({"username": username, "password": plaintext_password}, 201)
 
 @app.route("/login", methods=["POST"])
-def login(): #! TODO ADD USERS TO SQL
+def login(): 
     if ("username" not in request.json or "password" not in request.json):
         return make_response("Bad request", 400)
     
@@ -103,7 +103,7 @@ def login(): #! TODO ADD USERS TO SQL
     
     token = auth.gen_jwt(user)
 
-    return make_response({"access_token": token}, 200) #! TODO 
+    return make_response({"access_token": token}, 200) 
 
 ##################################################
 
