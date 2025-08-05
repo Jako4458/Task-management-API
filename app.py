@@ -7,6 +7,7 @@ import jwt
 import auth
 from flask_swagger_ui import get_swaggerui_blueprint
 
+import db
 from InvalidInputException import InvalidInputException
 
 if not load_dotenv(".env"):
@@ -15,10 +16,22 @@ if not load_dotenv(".env"):
 DEBUG = True
 HOST = os.environ.get("FLASK_HOST")
 PORT = os.environ.get("FLASK_PORT")
-
-import db
+db_config = {
+    "host" : os.environ.get("POSTGRES_HOST"),
+    "port" : os.environ.get("POSTGRES_PORT"),
+    "username" : os.environ.get("POSTGRES_USER"),
+    "password" : os.environ.get("POSTGRES_PASSWORD"),
+    "dbname" : os.environ.get("POSTGRES_DB"),
+}
 
 app = Flask(__name__)
+
+db_engine, db_connection = db.create_db_connection(db_config["host"], db_config["port"], db_config["username"], db_config["password"], db_config["dbname"])
+app.config["DB"] = {
+    "engine": db_engine,
+    "connection": db_connection
+}
+
 
 CORS(app)
 app.secret_key = os.environ.get("FLASK_SECRET")
@@ -52,7 +65,7 @@ def register():
 
     try:
         hashed_password = auth.hash_password(plaintext_password).decode()
-        db.insert_user(username,hashed_password)
+        db.insert_user(username,hashed_password, app.config["DB"]["connection"])
     except InvalidInputException as e:
         return make_response(str(e), 404)
 
@@ -66,7 +79,7 @@ def login(): #! TODO ADD USERS TO SQL
     username, plaintext_password = str(request.json.get("username")), str(request.json.get("password"))
 
     try:
-        user = db.get_user_by_username(username)
+        user = db.get_user_by_username(username, app.config["DB"]["connection"])
     except InvalidInputException as e:
         return make_response(str(e), 404)
 
@@ -93,11 +106,11 @@ def login(): #! TODO ADD USERS TO SQL
 ##################################################
 
 @app.route("/tasks", methods=["GET"])
-@auth.JWT_required
+@auth.JWT_required(app.config["DB"]["connection"])
 def get_tasks(user_id):
 
     try:
-        task_list = db.get_task_list_by_user_id(user_id)
+        task_list = db.get_task_list_by_user_id(user_id, app.config["DB"]["connection"])
     except InvalidInputException as e:
         return make_response(str(e), 404)
 
@@ -105,7 +118,7 @@ def get_tasks(user_id):
     return make_response(jsonify(TASKS), 200)
 
 @app.route("/tasks", methods=["POST"])
-@auth.JWT_required
+@auth.JWT_required(app.config["DB"]["connection"])
 def add_task(user_id):
     if ("title" not in request.json):
         return make_response("Bad request", 400)
@@ -114,7 +127,7 @@ def add_task(user_id):
     task["user_id"] = user_id
 
     try:
-        db.insert_task(task)
+        db.insert_task(task, app.config["DB"]["connection"])
     except InvalidInputException as e:
         return make_response(str(e), 404)
 
@@ -122,23 +135,23 @@ def add_task(user_id):
     return make_response(task, 200)
 
 @app.route("/tasks/<int:task_id>", methods=["PUT"])
-@auth.JWT_required
+@auth.JWT_required(app.config["DB"]["connection"])
 def update_task_by_id(task_id, user_id):
     task = request.json
     task["id"] = task_id
 
     try:
-        db.update_task(task, user_id)
+        db.update_task(task, user_id, app.config["DB"]["connection"])
     except InvalidInputException as e:
         return make_response(str(e), 404)
 
     return make_response("Success", 200)
 
 @app.route("/tasks/<int:task_id>", methods=["DELETE"])
-@auth.JWT_required
+@auth.JWT_required(app.config["DB"]["connection"])
 def delete_task_by_id(task_id, user_id):
     try:
-        db.delete_task_by_id(task_id, user_id)
+        db.delete_task_by_id(task_id, user_id, app.config["DB"]["connection"])
     except InvalidInputException as e:
         return make_response(str(e), 404)
 

@@ -4,24 +4,7 @@ import sqlalchemy as sa
 
 from InvalidInputException import InvalidInputException
 
-if not load_dotenv(".env"):
-    print("ERROR LOADING ENVIRONMENT!")
-
-host = os.environ.get("POSTGRES_HOST")
-port = os.environ.get("POSTGRES_PORT")
-username = os.environ.get("POSTGRES_USER")
-password = os.environ.get("POSTGRES_PASSWORD")
-dbname = os.environ.get("POSTGRES_DB")
-
-connection_string = f"postgresql://{username}:{password}@{host}/{dbname}"
-
-engine = sa.create_engine(connection_string)
-connection = engine.connect()
-
-
 metadata = sa.MetaData()
-# DROP ALL FOR DEBUGGING #! NOTE NON-PERSISTENT
-metadata.drop_all(engine)
 
 user_table = sa.Table("User",
                      metadata,
@@ -40,19 +23,30 @@ task_table = sa.Table("Task",
                      sa.Column("is_completed", sa.Boolean),
                      )
 
-metadata.create_all(engine)
-print(metadata.tables.keys())
+def create_db_connection(host, port, username, password, dbname):
+
+    connection_string = f"postgresql://{username}:{password}@{host}/{dbname}"
+
+    engine = sa.create_engine(connection_string)
+    connection = engine.connect()
+
+    metadata.drop_all(engine)
+
+    metadata.create_all(engine)
+
+    return engine, connection
 
 ##################################################
 
-def insert_user(username, hashed_password_string):
+def insert_user(username, hashed_password_string, connection):
     if not isinstance(username, str) or username.strip() == "": raise InvalidInputException("Invalid username: Must be a non-empty string")
     if not isinstance(hashed_password_string, str) or hashed_password_string.strip() == "": raise InvalidInputException("Invalid hashed_password_string: Must be a non-empty string")
 
-    query = user_table.insert().values(username=username, password_hash=hashed_password_string)
-    connection.execute(query)
+    query = user_table.insert().values(username=username, password_hash=hashed_password_string).returning(user_table.c.id)
+    new_user_id = connection.execute(query)
+    return new_user_id.fetchone()[0]
     
-def get_user_by_username(username):
+def get_user_by_username(username, connection):
     if not isinstance(username, str) or username.strip() == "": raise InvalidInputException("Invalid username: Must be a non-empty string")
 
     query = user_table.select().where(user_table.c.username == username)
@@ -62,7 +56,7 @@ def get_user_by_username(username):
     
     return {"id": user[0], "username": user[1], "password_hash": user[2]}
 
-def get_user_by_id(user_id):
+def get_user_by_id(user_id, connection):
     if not isinstance(user_id, int): raise InvalidInputException("Invalid user_id: Must be int")
 
     query = user_table.select().where(user_table.c.id == user_id)
@@ -72,13 +66,15 @@ def get_user_by_id(user_id):
     
     return {"id": user[0], "username": user[1], "password_hash": user[2]}
 
-def insert_task(task):
+def insert_task(task, connection):
+    if not isinstance(task, dict): raise InvalidInputException("Task must be of type dict")
     if "title" not in task.keys(): raise InvalidInputException("title is required for creating a task")
 
-    query = task_table.insert().values(**task)
-    connection.execute(query)
+    query = task_table.insert().values(**task).returning(task_table.c.id)
+    new_task_id = connection.execute(query)
+    return new_task_id.fetchone()[0]
 
-def get_task_by_id(task_id):
+def get_task_by_id(task_id, connection):
     if not isinstance(task_id, int): raise InvalidInputException("Invalid task_id: Must be int")
 
     query = task_table.select().where(task_table.c.id == task_id)
@@ -89,7 +85,7 @@ def get_task_by_id(task_id):
     return {"id": task[0], "user_id": task[1], "title": task[2], "description": task[3], "due_date": task[4], "is_completed": task[5]}
 
 
-def get_task_list_by_user_id(user_id):
+def get_task_list_by_user_id(user_id, connection):
     if not isinstance(user_id, int): raise InvalidInputException("Invalid user_id: Must be int")
 
     query = task_table.select().where(task_table.c.user_id == user_id)
@@ -103,14 +99,14 @@ def get_task_list_by_user_id(user_id):
 
     return return_list
 
-def update_task(task, user_id):
+def update_task(task, user_id, connection):
     if "id" not in task.keys() or not isinstance(task["id"], int): raise InvalidInputException("Missing or Invalid task_id: Must be int")
 
     query = sa.update(task_table).where(task_table.c.user_id == user_id).where(task_table.c.id == task["id"]).values(**task)
     result = connection.execute(query)
     if result.rowcount == 0: raise InvalidInputException("Invalid task_id: task_id not found")
 
-def delete_task_by_id(task_id, user_id):
+def delete_task_by_id(task_id, user_id, connection):
     if not isinstance(task_id, int): raise InvalidInputException("Invalid task_id: Must be int")
 
     query = task_table.delete().where(task_table.c.user_id == user_id).where(task_table.c.id == task_id)
@@ -120,4 +116,14 @@ def delete_task_by_id(task_id, user_id):
 ##################################################
 
 if __name__ == "__main__":
-    print(get_user_by_username("string"))
+    if not load_dotenv(".env"):
+        print("ERROR LOADING ENVIRONMENT!")
+
+    host = os.environ.get("POSTGRES_HOST")
+    port = os.environ.get("POSTGRES_PORT")
+    username = os.environ.get("POSTGRES_USER")
+    password = os.environ.get("POSTGRES_PASSWORD")
+    dbname = os.environ.get("POSTGRES_DB")
+
+    engine, connection = create_db_connection(host, port, username, password, dbname)
+    print(get_user_by_username("string", connection))

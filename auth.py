@@ -44,25 +44,28 @@ def verify_jwt(token):
 from flask import request, make_response
 from functools import wraps
 
-def JWT_required(func):
-    @wraps(func)
-    def inner_func(*args, **kwargs):
-        auth_header = request.headers.get("Authorization")
+def JWT_required(connection):
+    def decorator(func):
+        @wraps(func)
+        def inner_func(*args, **kwargs):
+            auth_header = request.headers.get("Authorization")
 
-        if auth_header is None:
-            return make_response("Unauthorized: Missing token", 401)
+            if auth_header is None:
+                return make_response("Unauthorized: Missing token", 401)
 
-        jwt_payload = verify_jwt(auth_header)
+            jwt_payload = verify_jwt(auth_header)
 
-        if jwt_payload is None:
-            return make_response("Unauthorized: Invalid token", 401)
+            if jwt_payload is None:
+                return make_response("Unauthorized: Invalid token", 401)
 
-        user_id = jwt_payload["user_id"]
+            user_id = jwt_payload["user_id"]
 
-        if (db.get_user_by_id(user_id) is None):
-            return make_response(f"Invalid User: User with id '{user_id}' not found!", 401) 
+            if (db.get_user_by_id(user_id, connection) is None):
+                return make_response(f"Invalid User: User with id '{user_id}' not found!", 401) 
 
-        return func(*args, user_id=user_id, **kwargs)
+            return func(*args, user_id=user_id, **kwargs)
 
-    return inner_func
+        return inner_func
+
+    return decorator
 
