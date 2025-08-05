@@ -1,8 +1,16 @@
+import sqlalchemy as sa
 import pytest
 import os 
 import auth
 
-from app import app as flask
+from dotenv import load_dotenv
+
+if not load_dotenv(".env.testing"):
+    print("ERROR LOADING ENVIRONMENT!")
+try: 
+    from app import app as flask
+except sa.exc.OperationalError:
+        pytest.exit(f"Check if Postgres is running. The test expects a Postgres instance to run on port '{port}'.\nThis can be run from Docker with 'docker-compose --profile testing up -d testing_postgres'", returncode=1)
 
 @pytest.fixture
 def flask_app():

@@ -25,7 +25,7 @@ task_table = sa.Table("Task",
 
 def create_db_connection(host, port, username, password, dbname):
 
-    connection_string = f"postgresql://{username}:{password}@{host}/{dbname}"
+    connection_string = f"postgresql://{username}:{password}@{host}:{port}/{dbname}"
 
     engine = sa.create_engine(connection_string)
     connection = engine.connect()

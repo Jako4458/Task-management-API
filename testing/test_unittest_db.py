@@ -18,9 +18,13 @@ dbname = os.environ.get("POSTGRES_DB")
 
 @pytest.fixture
 def empty_db():
-    engine, connection = db.create_db_connection(host, port, username, password, dbname)
-    yield connection
-    connection.close()
+
+    try:
+        engine, connection = db.create_db_connection(host, port, username, password, dbname)
+        yield connection
+        connection.close()
+    except sa.exc.OperationalError:
+        pytest.exit(f"Check if Postgres is running. The test expects a Postgres instance to run on port '{port}'.\nThis can be run from Docker with 'docker-compose --profile testing up -d testing_postgres'", returncode=1)
 
 @pytest.fixture
 def populate_db(empty_db):

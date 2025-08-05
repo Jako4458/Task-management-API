@@ -10,8 +10,8 @@ from flask_swagger_ui import get_swaggerui_blueprint
 import db
 from InvalidInputException import InvalidInputException
 
-if not load_dotenv(".env"):
-    print("ERROR LOADING ENVIRONMENT!")
+#if not load_dotenv(".env"):
+#    print("ERROR LOADING ENVIRONMENT!")
 
 DEBUG = True
 HOST = os.environ.get("FLASK_HOST")
