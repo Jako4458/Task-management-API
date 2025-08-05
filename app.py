@@ -43,7 +43,9 @@ swagger_config = '/swagger.json'
 
 @app.route("/swagger.json", methods=["GET"])
 def swagger():
-    return make_response(render_template("swagger.json", **{"HOST": HOST, "PORT": PORT}), 200)
+    response = make_response(render_template("swagger.json", **{"HOST": HOST, "PORT": PORT}), 200)
+    response.headers["Content-Type"] = "application/json"
+    return response
 
 swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,

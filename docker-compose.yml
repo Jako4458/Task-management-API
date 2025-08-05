@@ -9,6 +9,16 @@ services:
       - ./postgres:/var/lib/postgresql/data
     env_file: ".env"
 
+  flask_api:
+    env_file: ".env"
+    ports:
+      - 5033:5000
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+
   testing_postgres:
     image: postgres:14-alpine
     ports:
